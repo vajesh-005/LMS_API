@@ -5,7 +5,8 @@ exports.getAllUsersWithLeavesForManager = async function (request, h) {
   try {
     const managerId = request.params.manager_id;
     const users = await userModel.fetchAllUsersWithLeaves(managerId);
-    return h.response(users).code(200);
+    if (!users) return h.response("Not found !").code(404);
+    else return h.response(user).code(200);
   } catch (error) {
     console.error("Error occurred:", error.message);
     return h.response("Internal Server Error").code(500);
