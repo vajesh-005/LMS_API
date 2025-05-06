@@ -1,6 +1,7 @@
 require('dotenv').config();
 const hapi = require('@hapi/hapi');
 const { user } = require('./plugins/user');
+const { leave } = require('./plugins/leave');
 
 async function serverInit(){
     const server = hapi.server({
@@ -8,6 +9,7 @@ async function serverInit(){
         host : process.env.DB_HOST
     })
     await server.register(user) 
+    await server.register(leave)
     await  server.start();
     console.log('server started in ' , server.info.uri);
     
