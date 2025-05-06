@@ -1,5 +1,5 @@
 const userModel = require('../models/userModels');
-const leaveModel = require('../models/leaveModels')
+const leaveModel = require('../models/leaveModels');
 
 exports.getAllUsersWithLeavesForManager = async function (request, h) {
   try {
@@ -129,7 +129,37 @@ exports.updateStatus = async (request, h) => {
     else return h.response(user).code(200);
   }
   catch (error) {
-    console.log('error occurred ' , error.message);
+    console.log('error occurred ', error.message);
+    return h.response('Internal server error').code(500);
+  }
+}
+
+
+exports.getLeavesCountTakenByUser = async (request, h) => {
+  try {
+    const userId = request.params.userId;
+    const leaveTypeId = request.params.leaveTypeId;
+    const user = await userModel.getTakenLeaves(userId, leaveTypeId);
+    if (!user) return h.response('User not found').code(404);
+    else return h.response(user).code(200);
+  } catch (error) {
+    console.log("error occurred ", error.message);
+    return h.response('Internal server error').code(500);
+  }
+}
+
+
+exports.getRemainingLeavesForUser = async (request, h) => {
+  try {
+    // const { userId, leaveTypeId } = request.params;
+    const userId = request.params.userId;
+    const leaveTypeId = request.params.leaveTypeId;
+    const user = await userModel.getRemainingLeaves(userId, leaveTypeId);
+    if (!user) return h.response('User not found !').code(404);
+    else return h.response(user).code(200);
+  }
+  catch (error) {
+    console.log('error occurred', error.message);
     return h.response('Internal server error').code(500);
   }
 }

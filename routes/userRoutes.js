@@ -49,6 +49,16 @@ module.exports =[
     {
         method : 'PUT',
         path : '/statusApproval/{leaveRequestId}',
-        handler : userController.updateStatus
+        handler : userController.updateStatus   //overall status updation.
+    },
+    {
+        method : 'GET',
+        path : '/user/{userId}/leavesUsed/{leaveTypeId}',
+        handler : userController.getLeavesCountTakenByUser  // leaves count that the specific user taken leave in specific leave type.
+    },
+    {
+        method : 'GET',
+        path : '/user/{userId}/leavesRemaining/{leaveTypeId}',
+        handler : userController.getRemainingLeavesForUser  //leaves count that the user have leaves in specific leave type.
     }
 ]
