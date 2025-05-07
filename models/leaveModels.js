@@ -1,9 +1,27 @@
 const { db } = require('../configuration/db');
 
 exports.putLeaveRequestForUser = async (userId, leaveTypeId, startDate, endDate, reason) => {
-    const query = 'INSERT INTO leave_requests(user_id , leave_type_id , start_date, end_date , reason) VALUES (?,?,?,?,?)';
-    const [result] = await db.query(query, [userId, leaveTypeId, startDate, endDate, reason]);
-    return result;
+    if (leaveTypeId == 1) {
+        const checkQuery = `SELECT category_leaves_remaining FROM remaining_leaves WHERE user_id = ? AND leave_type_id =?`;
+        const [checkResults] = await db.query(checkQuery, [userId, leaveTypeId]);
+        const { category_leaves_remaining } = checkResults[0];
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        const dateDifference = ((end - start) / (1000 * 60 * 60 * 24)) + 1;
+        if (dateDifference <= category_leaves_remaining) {
+            const query = 'INSERT INTO leave_requests(user_id , leave_type_id , start_date, end_date , reason) VALUES (?,?,?,?,?)';
+            const [result] = await db.query(query, [userId, leaveTypeId, startDate, endDate, reason]);
+            return result;
+        }
+        else{
+            return ({message : "No sick leave is remaining for the user !"});
+        }
+
+    }
+    else{
+        return ({message : "This is another  type of leave !"});
+    }
+
 }
 
 exports.cancelLeaveRequest = async (userId, leaveTypeId) => {
@@ -63,7 +81,7 @@ exports.updateHrStatus = async (leaveRequestId) => {
 }
 
 exports.updateStatus = async (leaveRequestId) => {
-    const query =`UPDATE leave_requests 
+    const query = `UPDATE leave_requests 
     SET status = 'Approved'
     WHERE id = ?`;
     await db.query(query, [leaveRequestId]);

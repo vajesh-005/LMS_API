@@ -65,3 +65,16 @@ exports.getRemainingLeavesForUser = async (request, h) => {
     return h.response('Internal server error').code(500);
   }
 }
+
+exports.getRequestForManager = async (request , h)=>{
+  try{
+    const managerId = request.params.manager_id;
+    const user = await userModel.getRequestForManager(managerId);
+    if(!user ) return h.response('user not found').code(404);
+    else return h.response(user).code(200);
+  }
+  catch(error){
+    console.log("error occured " , error.message);
+    return h.response('Internal server error').code(500);
+  }
+}

@@ -26,9 +26,9 @@ module.exports =[
         path : '/user/{userId}/leavesRemaining/{leaveTypeId}',
         handler : userController.getRemainingLeavesForUser  //leaves count that the user have leaves in specific leave type.
     },
-    // {
-    //     method : 'GET',
-    //     path : '',
-    //     handler : u
-    // }
+    {
+        method : 'GET',
+        path : '/usersWithRequest/{manager_id}',
+        handler : userController.getRequestForManager
+    }
 ]

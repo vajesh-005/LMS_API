@@ -27,8 +27,17 @@ exports.getTakenLeaves = async (userId, leaveTypeId) => {
 }
 
 
-exports.getRemainingLeaves = async (userId , leaveTypeId) => {
+exports.getRemainingLeaves = async (userId, leaveTypeId) => {
     const query = ` SELECT user_id , leave_type_id , category_leaves_remaining FROM remaining_leaves WHERE user_id=? AND leave_type_id =?`;
-    const [result] = await db.query(query , [userId , leaveTypeId]);
+    const [result] = await db.query(query, [userId, leaveTypeId]);
+    return result;
+}
+
+exports.getRequestForManager = async (managerId) => {
+    const query = `SELECT lr.*
+FROM leave_requests lr
+JOIN users u ON lr.user_id = u.id
+WHERE u.manager_id = ?;`;
+    const [result] = await db.query(query, [managerId]);
     return result;
 }
