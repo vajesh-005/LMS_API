@@ -1,13 +1,13 @@
 const { db } = require('../configuration/db');
 
 exports.putLeaveRequestForUser = async (userId, leaveTypeId, startDate, endDate, reason) => {
+    const checkQuery = `SELECT category_leaves_remaining FROM remaining_leaves WHERE user_id = ? AND leave_type_id =?`;
+    const [checkResults] = await db.query(checkQuery, [userId, leaveTypeId]);
+    const { category_leaves_remaining } = checkResults[0];
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    const dateDifference = ((end - start) / (1000 * 60 * 60 * 24)) + 1;
     if (leaveTypeId == 1) {
-        const checkQuery = `SELECT category_leaves_remaining FROM remaining_leaves WHERE user_id = ? AND leave_type_id =?`;
-        const [checkResults] = await db.query(checkQuery, [userId, leaveTypeId]);
-        const { category_leaves_remaining } = checkResults[0];
-        const start = new Date(startDate);
-        const end = new Date(endDate);
-        const dateDifference = ((end - start) / (1000 * 60 * 60 * 24)) + 1;
         if (dateDifference <= category_leaves_remaining) {
 
             if (dateDifference < 2) {
@@ -61,7 +61,7 @@ exports.putLeaveRequestForUser = async (userId, leaveTypeId, startDate, endDate,
                      VALUES (?,?,?,?,?)`;
             try {
                 await db.query(query, [userId, leaveTypeId, startDate, endDate, reason]);
-                return ({ message: 'leave request submitte with 2 step verification !' });
+                return ({ message: 'leave request submitted with 3 step verification !' });
             }
             catch (error) {
                 console.log(error.message);
@@ -84,7 +84,7 @@ exports.putLeaveRequestForUser = async (userId, leaveTypeId, startDate, endDate,
                      VALUES (?,?,?,?,?,?,?)`;
                      try{
                         await db.query(query , [userId , leaveTypeId , startDate,endDate, reason , null , null]);
-                        return ({message : 'leave request is submitted with on step verification !'});
+                        return ({message : 'leave request is submitted with one step verification !'});
                      }
                      catch(error){
                         console.log(error.message);
