@@ -15,9 +15,8 @@ exports.requestLeaveById = async (request, h) => {
 }
 exports.canceleavebyId = async (request, h) => {
   try {
-    const userId = request.params.userId;
-    const leaveTypeId = request.params.leaveId;
-    const user = await leaveModel.cancelLeaveRequest(userId, leaveTypeId);
+    const leaveRequestId = request.params.leaveRequestId;
+    const user = await leaveModel.cancelLeaveRequest(leaveRequestId);
     if (!user) return h.response("User not found !").code(404);
     else return h.response(user).code(200);
   }
@@ -114,3 +113,4 @@ exports.getLeavesList= async (request , h) =>{
     return h.response("Internal server error").code(500);
   }
 }
+

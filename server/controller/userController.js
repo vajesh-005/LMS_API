@@ -80,14 +80,14 @@ exports.getRequestForManager = async (request, h) => {
 }
 
 exports.getPendingRequest = async (request, h) => {
-  try{
+  try {
     const userId = request.params.userId;
     const user = await userModel.getPendingRequests(userId);
-    if(!user) return h.response("User not found").code(404);
+    if (!user) return h.response("User not found").code(404);
     else return h.response(user).code(200);
   }
-  catch(error){
-    console.log("error occurred !" , error.message);
+  catch (error) {
+    console.log("error occurred !", error.message);
     return h.response("Internal server error").code(500);
   }
 }

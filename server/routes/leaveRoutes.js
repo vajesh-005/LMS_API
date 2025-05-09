@@ -6,8 +6,8 @@ module.exports=[
         handler : leaveController.requestLeaveById //posting a leave request.
     } ,
     {
-        method : 'DELETE',
-        path : '/cancelLeave/{userId}/{leaveId}',
+        method : 'PUT',
+        path : '/cancelLeave/{leaveRequestId}',
         handler : leaveController.canceleavebyId //cancelling a leave request by employee.
     },
     {

@@ -6,7 +6,12 @@ const { leave } = require('./plugins/leave');
 async function serverInit(){
     const server = hapi.server({
         port : process.env.API_PORT || 1234,
-        host : process.env.DB_HOST
+        host : process.env.DB_HOST,
+        routes: {
+            cors: {
+              origin: ['http://localhost:5173'], // Allow your frontend
+            }
+          }
     })
     await server.register(user) 
     await server.register(leave)
