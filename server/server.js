@@ -9,7 +9,8 @@ async function serverInit(){
         host : process.env.DB_HOST,
         routes: {
             cors: {
-              origin: ['http://localhost:5173'], // Allow your frontend
+              origin: ['http://localhost:5173'], 
+              credentials: true
             }
           }
     })

@@ -1,4 +1,5 @@
 const { db } = require('../configuration/db');
+const bcrypt = require('bcrypt')
 
 exports.fetchAllUsersWithLeaves = async (managerId) => {
     const query = `SELECT user_id , total_remaining_days
@@ -28,7 +29,7 @@ exports.fetchTotalLeavesForUser = async (id) => {
     }
     catch (error) {
         console.log('error occurred in model !', error.message);
-        return;
+        return null;
     }
 }
 
@@ -62,19 +63,7 @@ exports.getTakenLeaves = async (userId, leaveTypeId) => {
 
 }
 
-exports.getRemainingLeaves = async (userId, leaveTypeId) => {
-    const query = `SELECT user_id , leave_type_id , category_leaves_remaining 
-    FROM remaining_leaves
-    WHERE user_id = ? AND leave_type_id =?`;
-    try {
-        const [result] = await db.query(query, [userId, leaveTypeId]);
-        return result;
-    }
-    catch (error) {
-        console.log('error occurred in model !', error.message);
-        return;
-    }
-}
+
 
 exports.getRequestForManager = async (managerId) => {
     const query = `SELECT lr.*
@@ -105,3 +94,42 @@ exports.getPendingRequests = async (userId) => {
     }
 
 }
+
+exports.getLatestRequests = async (userId)=>{
+    const query = `SELECT * FROM leave_requests 
+    WHERE user_id =?`;
+    try{
+        const [results] = await db.query(query , [userId]);
+    return results;
+    }
+    catch(error){
+        console.log('error occurred in model ' ,error.message);
+        return null;
+    }
+}
+exports.getUserWithEmail = async (email )=>{
+    const query = `SELECT * FROM users WHERE email = ?`;
+
+    try{
+        const [results] = await db.query(query , [email]);
+        console.log(results)
+        return results;
+    }
+    catch(error){
+        console.log('error occurred in model', error.message);
+        return null;
+    }
+}
+exports.createUser = async (name , email , hashed , role , managerId , hrId , directorId )=>{
+    const query = `INSERT INTO users (name, email, password, role, manager_id, hr_id, director_id)
+     VALUES (?, ?, ?, ?, ?, ?, ?)`;
+     try{
+        const [results] = await db.query (query , [name , email,  hashed , role, managerId, hrId, directorId]);
+        return results;
+     }
+     catch(error){
+        console.log('error occurred in model',error.message);
+        return ;
+     }
+}
+

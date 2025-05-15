@@ -3,94 +3,104 @@ const { db } = require('../configuration/db');
 exports.putLeaveRequestForUser = async (userId, leaveTypeId, startDate, endDate, reason) => {
     const checkQuery = `SELECT category_leaves_remaining FROM remaining_leaves WHERE user_id = ? AND leave_type_id =?`;
     const [checkResults] = await db.query(checkQuery, [userId, leaveTypeId]);
+    if (!checkResults || checkResults.length === 0) {
+        return { message: 'No remaining leave record found for this user and leave type' };
+      }
     const { category_leaves_remaining } = checkResults[0];
     const start = new Date(startDate);
     const end = new Date(endDate);
     const dateDifference = ((end - start) / (1000 * 60 * 60 * 24)) + 1;
-    if (leaveTypeId == 1) {
-        if (dateDifference <= category_leaves_remaining) {
+    const leaveTypeCheck = `SELECT * FROM leave_types WHERE id = ?`;
+    const [leaveTyperesult] = await db.query(leaveTypeCheck, [leaveTypeId]);
 
-            if (dateDifference < 2) {
-                const query = 'INSERT INTO leave_requests(user_id , leave_type_id , start_date, end_date , reason , status) VALUES (?,?,?,?,?,?)';
+    if (leaveTyperesult.length > 0) {
+        console.log(leaveTyperesult.length);
+        if (leaveTypeId == 1) {
+            if (dateDifference <= category_leaves_remaining) {
+
+                if (dateDifference <= 1) {
+                    const query = 'INSERT INTO leave_requests(user_id , leave_type_id , start_date, end_date , reason , status) VALUES (?,?,?,?,?,?)';
+                    try {
+                        const [result] = await db.query(query, [userId, leaveTypeId, startDate, endDate, reason, "Approved"]);
+                        await exports.updateLeaveCount(result.insertId);
+                        return ({
+                            message: 'leave request accepted and updated leave count',
+                            request_id: result.insertId
+                        });
+                    }
+                    catch (error) {
+                        console.log('error occurred in model !', error.message);
+                        return ({
+                            message: 'leave request not able to submit !'
+                        })
+                    }
+                }
+                else {
+                    const query = `INSERT INTO leave_requests(user_id , leave_type_id , start_date, end_date , reason , hr_status , director_status)
+                         VALUES (?,?,?,?,?,?,?)`;
+                    try {
+                        await db.query(query, [userId, leaveTypeId, startDate, endDate, reason, null, null]);
+                        return ({ message: 'leave request submitted in one step verification !' });
+                    }
+                    catch (error) {
+                        console.log(error.message);
+                        return ({ message: 'error occurred in model (one step verification)' });
+                    }
+                }
+
+            }
+            else {
+                const query = `INSERT INTO leave_requests(user_id , leave_type_id , start_date, end_date , reason , director_status)
+                         VALUES (?,?,?,?,?,?)`;
                 try {
-                    const [result] = await db.query(query, [userId, leaveTypeId, startDate, endDate, reason, "Approved"]);
-                    await exports.updateLeaveCount(result.insertId);
-                    return ({
-                        message: 'leave request accepted and updated leave count',
-                        request_id: result.insertId
-                    });
+                    await db.query(query, [userId, leaveTypeId, startDate, endDate, reason, null]);
+                    return ({ message: 'leave request submitted with two step verification !' })
                 }
                 catch (error) {
-                    console.log('error occurred in model !', error.message);
-                    return ({
-                        message: 'leave request not able to submit !'
-                    })
+                    console.log(error.message);
+                    return ({ message: 'error occurred in model (two step verification)' })
+                }
+            }
+        }
+        else {
+            if (dateDifference >= 5) {
+                const query = `INSERT INTO leave_requests(user_id , leave_type_id , start_date, end_date , reason)
+                         VALUES (?,?,?,?,?)`;
+                try {
+                    await db.query(query, [userId, leaveTypeId, startDate, endDate, reason]);
+                    return ({ message: 'leave request submitted with 3 step verification !' });
+                }
+                catch (error) {
+                    console.log(error.message);
+                    return ({ message: 'error occurred in model (3 step verification)' })
+                }
+            } else if (dateDifference >= 2) {
+                const query = `INSERT INTO leave_requests(user_id , leave_type_id , start_date, end_date , reason , director_status)
+                         VALUES (?,?,?,?,?,?)`;
+                try {
+                    await db.query(query, [userId, leaveTypeId, startDate, endDate, reason, null]);
+                    return ({ message: 'leave request is submitted with 2 step verification !' });
+                }
+                catch (error) {
+                    console.log(error.message);
+                    return ({ message: 'error occurred in model !(2 step verification)' })
                 }
             }
             else {
                 const query = `INSERT INTO leave_requests(user_id , leave_type_id , start_date, end_date , reason , hr_status , director_status)
-                     VALUES (?,?,?,?,?,?,?)`;
+                         VALUES (?,?,?,?,?,?,?)`;
                 try {
                     await db.query(query, [userId, leaveTypeId, startDate, endDate, reason, null, null]);
-                    return ({ message: 'leave request submitted in one step verification !' });
+                    return ({ message: 'leave request is submitted with one step verification !' });
                 }
                 catch (error) {
                     console.log(error.message);
-                    return ({ message: 'error occurred in model (one step verification)' });
+                    return ({ message: "error occurred in model ! (one step verification !)" })
                 }
             }
-
         }
-        else {
-            const query = `INSERT INTO leave_requests(user_id , leave_type_id , start_date, end_date , reason , director_status)
-                     VALUES (?,?,?,?,?,?)`;
-            try {
-                await db.query(query, [userId, leaveTypeId, startDate, endDate, reason, null]);
-                return ({ message: 'leave request submitted with two step verification !' })
-            }
-            catch (error) {
-                console.log(error.message);
-                return ({ message: 'error occurred in model (two step verification)' })
-            }
-        }
-
-    }
-    else {
-        if (dateDifference >= 5) {
-            const query = `INSERT INTO leave_requests(user_id , leave_type_id , start_date, end_date , reason)
-                     VALUES (?,?,?,?,?)`;
-            try {
-                await db.query(query, [userId, leaveTypeId, startDate, endDate, reason]);
-                return ({ message: 'leave request submitted with 3 step verification !' });
-            }
-            catch (error) {
-                console.log(error.message);
-                return ({ message: 'error occurred in model (2 step verification)' })
-            }
-        } else if (dateDifference>=2){
-            const query = `INSERT INTO leave_requests(user_id , leave_type_id , start_date, end_date , reason , director_status)
-                     VALUES (?,?,?,?,?,?)`;
-                     try{
-                        await db.query(query , [userId , leaveTypeId , startDate,endDate , reason , null]);
-                        return ({messsage : 'leave request is submitted with 2 step verification !'});
-                     }
-                     catch(error){
-                        console.log(error.message);
-                        return ({message : 'error occurred in model !(2 step verification)'})
-                     }
-        }
-        else{
-            const query = `INSERT INTO leave_requests(user_id , leave_type_id , start_date, end_date , reason , hr_status , director_status)
-                     VALUES (?,?,?,?,?,?,?)`;
-                     try{
-                        await db.query(query , [userId , leaveTypeId , startDate,endDate, reason , null , null]);
-                        return ({message : 'leave request is submitted with one step verification !'});
-                     }
-                     catch(error){
-                        console.log(error.message);
-                        return ({message :"error occurred in model ! (one step verification !)"})
-                     }
-        }
+    } else {
+        return ({ message: 'Unidentified leave type !' });
     }
 
 }
@@ -145,11 +155,22 @@ exports.cancelLeaveRequest = async (leaveRequestId) => {
 }
 exports.updateManagerStatus = async (leaveRequestId) => {
     const query = `UPDATE leave_requests 
-    SET manager_status = 'Approved'
+    SET manager_status = "Approved"
     WHERE id = ?`;
     try {
         await db.query(query, [leaveRequestId]);
-        return ("Successfully updated 😁");
+        const check = `SELECT * FROM leave_requests WHERE id = ?`;
+        const [results] = await db.query(check, [leaveRequestId]);
+        const { id, manager_status, hr_status, director_status } = results[0];
+        if (manager_status === "Approved" && hr_status === "Approved" && director_status === "Approved") {
+            exports.updateStatus(id);
+            return ("Successfully updated 😁");
+        }
+        else {
+            return ({ message: 'other verification are pending ' })
+        }
+
+
     }
     catch (error) {
         console.log('error occurred in model !', error.message);
@@ -165,7 +186,16 @@ exports.updateDirectorStatus = async (leaveRequestId) => {
     WHERE id = ?`;
     try {
         await db.query(query, [leaveRequestId]);
-        return ("Successfully updated !");
+        const check = `SELECT * FROM leave_requests WHERE id = ?`;
+        const [results] = await db.query(check, [leaveRequestId]);
+        const { id, manager_status, hr_status, director_status } = results[0];
+        if (manager_status === "Approved" && hr_status === "Approved" && director_status === "Approved") {
+            exports.updateStatus(id);
+            return ("Successfully updated 😁");
+        }
+        else {
+            return ({ message: 'other verification are pending ' })
+        }
     }
     catch (error) {
         console.log('error occurred in model !', error.message);
@@ -179,7 +209,16 @@ exports.updateHrStatus = async (leaveRequestId) => {
     WHERE id = ?`;
     try {
         await db.query(query, [leaveRequestId]);
-        return ("Successfully updated !");
+        const check = `SELECT * FROM leave_requests WHERE id = ?`;
+        const [results] = await db.query(check, [leaveRequestId]);
+        const { id, manager_status, hr_status, director_status } = results[0];
+        if (manager_status === "Approved" && hr_status === "Approved" && director_status === "Approved") {
+            exports.updateStatus(id);
+            return ("Successfully updated 😁");
+        }
+        else {
+            return ({ message: 'other verification are pending ' })
+        }
     }
     catch (error) {
         console.log('error occurred in model !', error.message);
@@ -230,5 +269,18 @@ exports.getLeavesLists = async (userId) => {
     catch (error) {
         console.log("error occurred in model ", error.message);
         return ({ message: 'failed to get lists' });
+    }
+}
+
+
+exports.getNames = async (leaveTypeId) => {
+    const query = `SELECT id , type_name FROM leave_types`;
+    try{
+        const [result] = await db.query(query);
+        return result;
+    }
+    catch(error){
+        console.log('error occurred in model ', error.message);
+        return ({message : 'failed to get names '})
     }
 }
